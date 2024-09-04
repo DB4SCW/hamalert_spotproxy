@@ -39,7 +39,20 @@ $db->exec("
         spotterEntity TEXT,
         spotterCq INTEGER,
         spotterContinent TEXT,
-        triggerComment TEXT
+        triggerComment TEXT,
+        speed INTEGER,
+        snr INTEGER,
+        state TEXT,
+        spotterState TEXT,
+        iotaGroupRef TEXT,
+        iotaGroupName TEXT,
+        summitName TEXT,
+        summitHeight TEXT,
+        summitPoints INTEGER,
+        summitRef TEXT,
+        wwffName TEXT,
+        wwffDivision TEXT,
+        wwffRef TEXT
     )
 ");
 
@@ -59,11 +72,13 @@ $stmt = $db->prepare("
 INSERT INTO spots (
     fullCallsign, callsign, frequency, band, mode, modeDetail, time, spotter, rawText, 
     title, comment, source, qsl, dxcc, entity, cq, continent, homeDxcc, homeEntity, 
-    spotterDxcc, spotterEntity, spotterCq, spotterContinent, triggerComment
+    spotterDxcc, spotterEntity, spotterCq, spotterContinent, triggerComment, speed, snr, state, spotterState,
+    iotaGroupRef, iotaGroupName, summitName, summitHeight, summitPoints, summitRef, wwffName, wwffDivision, wwffRef
 ) VALUES (
     :fullCallsign, :callsign, :frequency, :band, :mode, :modeDetail, :time, :spotter, :rawText, 
     :title, :comment, :source, :qsl, :dxcc, :entity, :cq, :continent, :homeDxcc, :homeEntity, 
-    :spotterDxcc, :spotterEntity, :spotterCq, :spotterContinent, :triggerComment
+    :spotterDxcc, :spotterEntity, :spotterCq, :spotterContinent, :triggerComment, :speed, :snr, :state, :spotterState,
+    :iotaGroupRef, :iotaGroupName, :summitName, :summitHeight, :summitPoints, :summitRef, :wwffName, :wwffDivision, :wwffRef
 )
 ");
 
@@ -92,6 +107,19 @@ $stmt->bindValue(':spotterEntity', $jsonData['spotterEntity'] ?? null);
 $stmt->bindValue(':spotterCq', $jsonData['spotterCq'] ?? null);
 $stmt->bindValue(':spotterContinent', $jsonData['spotterContinent'] ?? null);
 $stmt->bindValue(':triggerComment', $jsonData['triggerComment'] ?? null);
+$stmt->bindValue(':speed', $jsonData['speed'] ?? null);
+$stmt->bindValue(':snr', $jsonData['snr'] ?? null);
+$stmt->bindValue(':state', $jsonData['state'] ?? null);
+$stmt->bindValue(':spotterState', $jsonData['spotterState'] ?? null);
+$stmt->bindValue(':iotaGroupRef', $jsonData['iotaGroupRef'] ?? null);
+$stmt->bindValue(':iotaGroupName', $jsonData['iotaGroupName'] ?? null);
+$stmt->bindValue(':summitName', $jsonData['summitName'] ?? null);
+$stmt->bindValue(':summitHeight', $jsonData['summitHeight'] ?? null);
+$stmt->bindValue(':summitPoints', $jsonData['summitPoints'] ?? null);
+$stmt->bindValue(':summitRef', $jsonData['summitRef'] ?? null);
+$stmt->bindValue(':wwffName', $jsonData['wwffName'] ?? null);
+$stmt->bindValue(':wwffDivision', $jsonData['wwffDivision'] ?? null);
+$stmt->bindValue(':wwffRef', $jsonData['wwffRef'] ?? null);
 
 // Execute the SQL query to insert the data
 $stmt->execute();
