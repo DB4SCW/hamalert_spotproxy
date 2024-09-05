@@ -161,36 +161,25 @@
         $callsign = $jsonData['callsign'] ?? null;
         if (array_key_exists($callsign, $config)) {
             
-            //Use curl to send a POST request of the original raw data
-            $ch = curl_init($config[$callsign]);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($rawData))
-            );
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $rawData);
+            //get destination(s)
+            $destinations = $config['callsign'];
 
-            //Execute the request and get the response
-            $response = curl_exec($ch);
-            
-            //Check for curl errors
-            if ($response === false) {
-                $error = curl_error($ch);
-                curl_close($ch);
-                die('Error sending POST request to proxy: ' . $error);
+            //determine if it is a singular destination or not
+            if(is_array($destinations))
+            {   
+                //proxy for each destination
+                foreach ($destinations as $destination) {
+                    hamalert_proxy($rawData, $destination, $db, $insertedId, $destinations);
+                }
+            }elseif(is_string($destinations))
+            {
+                //proxy for singular destination
+                $destination = $destinations;
+                hamalert_proxy($rawData, $destination, $db, $insertedId);
+            }else
+            {
+                die("Invalid destination for proxy in config.json");
             }
-
-            //close curl
-            curl_close($ch);
-
-            //set proxy URL to spot
-            $stmt = $db->prepare("UPDATE spots SET proxied = :proxied WHERE id = :id;");
-            $stmt->bindValue(':proxied', $config[$callsign]);
-            $stmt->bindValue(':id', $insertedId);
-            
-            //Execute the SQL query to update data
-            $stmt->execute();
             
             //return positive messaage
             echo "Hamalert proxy for callsign " . $callsign . " performed successfully.";
@@ -198,6 +187,41 @@
 
         return;
     }
+
+    function hamalert_proxy(string $raw_data, $destination, $db, int $dbid, $multiple = null)
+    {
+        //Use curl to send a POST request of the original raw data
+        $ch = curl_init($destination);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($raw_data))
+        );
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $raw_data);
+
+        //Execute the request and get the response
+        $response = curl_exec($ch);
+
+        //Check for curl errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            die('Error sending POST request to proxy: ' . $error);
+        }
+
+        //close curl
+        curl_close($ch);
+
+        //set proxy URL to spot
+        $stmt = $db->prepare("UPDATE spots SET proxied = :proxied WHERE id = :id;");
+        $stmt->bindValue(':proxied', $multiple == null ? $destination : json_encode($multiple));
+        $stmt->bindValue(':id', $dbid);
+
+        //Execute the SQL query to update data
+        $stmt->execute();
+    }
+
 
     //run main function
     main();
