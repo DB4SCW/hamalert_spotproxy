@@ -146,7 +146,7 @@
         $stmt->execute();
 
         //Respond to the client
-        echo "Data saved to spots.sqlite";
+        echo "Data saved to spots.sqlite\r\n";
 
         //Get the ID of the inserted row
         $insertedId = $db->lastInsertId();
@@ -170,19 +170,19 @@
                 //proxy for each destination
                 foreach ($destinations as $destination) {
                     hamalert_proxy($rawData, $destination, $db, $insertedId, $destinations);
+                    echo "Hamalert proxy for callsign " . $callsign . " to " . $destination . " performed successfully.\r\n";
                 }
             }elseif(is_string($destinations))
             {
                 //proxy for singular destination
                 $destination = $destinations;
                 hamalert_proxy($rawData, $destination, $db, $insertedId);
+                echo "Hamalert proxy for callsign " . $callsign . " to " . $destination . " performed successfully.\r\n";
             }else
             {
-                die("Invalid destination for proxy in config.json");
+                die("Invalid destination for proxy in config.json\r\n");
             }
-            
-            //return positive messaage
-            echo "Hamalert proxy for callsign " . $callsign . " performed successfully.";
+           
         }
 
         return;
