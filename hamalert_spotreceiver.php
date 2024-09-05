@@ -162,7 +162,7 @@
         if (array_key_exists($callsign, $config)) {
             
             //get destination(s)
-            $destinations = $config['callsign'];
+            $destinations = $config[$callsign];
 
             //determine if it is a singular destination or not
             if(is_array($destinations))
