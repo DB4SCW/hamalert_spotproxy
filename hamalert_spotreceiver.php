@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST')
 $db->exec("
     CREATE TABLE IF NOT EXISTS spots (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         fullCallsign TEXT,
         callsign TEXT,
         frequency TEXT,
