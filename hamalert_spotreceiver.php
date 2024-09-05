@@ -72,7 +72,8 @@
                 summitRef TEXT,
                 wwffName TEXT,
                 wwffDivision TEXT,
-                wwffRef TEXT
+                wwffRef TEXT,
+                proxied TEXT
             )
         ");
 
@@ -141,11 +142,14 @@
         $stmt->bindValue(':wwffDivision', $jsonData['wwffDivision'] ?? null);
         $stmt->bindValue(':wwffRef', $jsonData['wwffRef'] ?? null);
 
-        // Execute the SQL query to insert the data
+        //Execute the SQL query to insert the data
         $stmt->execute();
 
-        // Respond to the client
+        //Respond to the client
         echo "Data saved to spots.sqlite";
+
+        //Get the ID of the inserted row
+        $insertedId = $db->lastInsertId();
 
         //check if hamalertproxy is to be performed. If not, abort early.
         if($skip_hamalert_proxy)
@@ -179,6 +183,14 @@
 
             //close curl
             curl_close($ch);
+
+            //set proxy URL to spot
+            $stmt = $db->prepare("UPDATE spots SET proxied = :proxied WHERE id = :id;");
+            $stmt->bindValue(':proxied', $config[$callsign]);
+            $stmt->bindValue(':id', $insertedId);
+            
+            //Execute the SQL query to update data
+            $stmt->execute();
             
             //return positive messaage
             echo "Hamalert proxy for callsign " . $callsign . " performed successfully.";
