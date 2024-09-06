@@ -2,6 +2,12 @@
 
     function main()
     {
+        // Check if the request method is POST
+        if ($_SERVER['REQUEST_METHOD'] != 'POST') 
+        {
+            die("Please send a POST request.");
+        }
+        
         //check if config file exists and decide if hamalertproxy capabilities are needed
         $skip_hamalert_proxy = true;
         $config = [];
@@ -21,15 +27,16 @@
         // Define the database file
         $dbFile = 'spots.sqlite';
 
+        //check if flagfile exist to skip persitent sqlite storage - use this if you only want the proxy functionality
+        if(file_exists('no_database_please.txt'))
+        {
+            //usees an in-memory-db to prevent creation of a persistant database file
+            $dbFile = ":memory:";
+        }
+
         // Create (open) SQLite database connection
         $db = new PDO('sqlite:' . $dbFile);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        // Check if the request method is POST
-        if ($_SERVER['REQUEST_METHOD'] != 'POST') 
-        {
-            die("Please send a POST request.");
-        }
 
         // Create the 'spots' table if it doesn't exist
         $db->exec("
@@ -146,7 +153,7 @@
         $stmt->execute();
 
         //Respond to the client
-        echo "Data saved to spots.sqlite\r\n";
+        echo "Data saved to " . $dbFile . "\r\n";
 
         //Get the ID of the inserted row
         $insertedId = $db->lastInsertId();
