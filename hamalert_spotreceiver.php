@@ -30,7 +30,7 @@
         //check if flagfile exist to skip persitent sqlite storage - use this if you only want the proxy functionality
         if(file_exists('no_database_please.txt'))
         {
-            //usees an in-memory-db to prevent creation of a persistant database file
+            //uses an in-memory-db to prevent creation of a persistant database file
             $dbFile = ":memory:";
         }
 
