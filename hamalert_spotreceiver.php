@@ -8,46 +8,114 @@
             die("Please send a POST request.");
         }
         
-        //check if config file exists and decide if hamalertproxy capabilities are needed
-        $skip_hamalert_proxy = true;
+        //check if config file exists and abort if missing
         $config = [];
         $callsignconfig = [];
         $triggerconfig = [];
-        if(file_exists("config.json"))
+        $databaseconfig = [];
+        if(!file_exists("config.json"))
         {
-            //load config.json
-            try {
-                $config = json_decode(file_get_contents("config.json", true), true);
-            } catch (\Throwable $th) {
-                die("invalid JSON file");
-            }
+            echo "No valid config.json file found. Please copy the example file and change it to your liking.";
+            return;
+        }
+
+        //load config.json
+        try {
+            $config = json_decode(file_get_contents("config.json", true), true);
+        } catch (\Throwable $th) {
+            die("invalid JSON file");
+        }
+        
+        //extract callsign config if present
+        if(array_key_exists("callsigns", $config))
+        {
+            $callsignconfig = $config['callsigns'];
+        }
+
+        //extract trigger config if present
+        if(array_key_exists("triggers", $config))
+        {
+            $triggerconfig = $config['triggers'];
+        }
+
+        //extract trigger config if present
+        if(array_key_exists("triggers", $config))
+        {
+            $triggerconfig = $config['triggers'];
+        }
+
+        //extract databse config if present
+        if(array_key_exists("database", $config))
+        {
+            $databaseconfig = $config['database'];
+        }
+
+        // Get the raw POST data (which is JSON)
+        $rawData = file_get_contents('php://input');
+                    
+        // Decode the JSON into an associative array
+        $jsonData = json_decode($rawData, true);
+
+        // Check if the data is valid JSON
+        if (json_last_error() != JSON_ERROR_NONE) {
+            die("Invalid JSON received");
+        } 
+
+        // get relevant database values
+        $use_database = (bool)($databaseconfig['use_database'] ?? false);
+        $dbFile = $databaseconfig['filename'] ?? 'spots.sqlite';
+
+        //store data to database if the user chose to activate the feature. 
+        //if so, return database connection and last inserted id
+        $db = null;
+        $insertedId = 0;
+        if($use_database)
+        {
+            $databaseresult = storespottodatabase($dbFile, $jsonData);
+            $db = $databaseresult[0];
+            $insertedId = $databaseresult[1];
+        }
+
+        //get callsign data from input json
+        $callsign = $jsonData['callsign'] ?? null;
+        $trigger = $jsonData['triggerComment'] ?? null;
+        
+        //run proxy for every call if ":ALLCALL:" exists in the config
+        if(array_key_exists(":ALLCALL:", $callsignconfig))
+        {
+            //get destination(s)
+            $destinations = $callsignconfig[':ALLCALL:'];
             
-            //extract callsign config if present
-            if(array_key_exists("callsigns", $config))
-            {
-                $callsignconfig = $config['callsigns'];
-            }
-
-            //extract trigger config if present
-            if(array_key_exists("triggers", $config))
-            {
-                $triggerconfig = $config['triggers'];
-            }
-
-            //set skip flag
-            $skip_hamalert_proxy = false;
+            //run proxy
+            runproxy($callsign, $destinations, $rawData, $db, $insertedId, "allcall");
         }
 
-        // Define the database file
-        $dbFile = 'spots.sqlite';
+        //run proxy if callsign explicitly exists inside the callsignconfig
+        if (array_key_exists($callsign, $callsignconfig)) {
+            
+            //get destination(s)
+            $destinations = $callsignconfig[$callsign];
 
-        //check if flagfile exist to skip persitent sqlite storage - use this if you only want the proxy functionality
-        if(file_exists('no_database_please.txt'))
+            //run proxy
+            runproxy($callsign, $destinations, $rawData, $db, $insertedId, "callsign");
+        }
+
+        //run proxy for triggers
+        if(array_key_exists($trigger, $triggerconfig))
         {
-            //uses an in-memory-db to prevent creation of a persistant database file
-            $dbFile = ":memory:";
+            //get destination(s)
+            $destinations = $triggerconfig[$trigger];
+
+            //run proxy
+            runproxy($callsign, $destinations, $rawData, $db, $insertedId, "trigger");            
         }
 
+        //end function
+        return;
+    }
+
+    function storespottodatabase(string $dbFile, string $jsonData)
+    {
         // Create (open) SQLite database connection
         $db = new PDO('sqlite:' . $dbFile);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -98,16 +166,7 @@
             )
         ");
 
-        // Get the raw POST data (which is JSON)
-        $rawData = file_get_contents('php://input');
-            
-        // Decode the JSON into an associative array
-        $jsonData = json_decode($rawData, true);
-
-        // Check if the data is valid JSON
-        if (json_last_error() != JSON_ERROR_NONE) {
-            die("Invalid JSON received");
-        } 
+        
 
         // Prepare the SQL query to insert data into the 'spots' table
         $stmt = $db->prepare("
@@ -172,48 +231,8 @@
         //Get the ID of the inserted row
         $insertedId = $db->lastInsertId();
 
-        //check if hamalertproxy is to be performed. If not, abort early.
-        if($skip_hamalert_proxy)
-        {
-            return;
-        }
-
-        //get callsign data from input json
-        $callsign = $jsonData['callsign'] ?? null;
-        $trigger = $jsonData['triggerComment'] ?? null;
-        
-        //run proxy for every call if ":ALLCALL:" exists in the config
-        if(array_key_exists(":ALLCALL:", $callsignconfig))
-        {
-            //get destination(s)
-            $destinations = $callsignconfig[':ALLCALL:'];
-            
-            //run proxy
-            runproxy($callsign, $destinations, $rawData, $db, $insertedId, "allcall");
-        }
-
-        //run proxy if callsign explicitly exists inside the callsignconfig
-        if (array_key_exists($callsign, $callsignconfig)) {
-            
-            //get destination(s)
-            $destinations = $callsignconfig[$callsign];
-
-            //run proxy
-            runproxy($callsign, $destinations, $rawData, $db, $insertedId, "callsign");
-        }
-
-        //run proxy for triggers
-        if(array_key_exists($trigger, $triggerconfig))
-        {
-            //get destination(s)
-            $destinations = $triggerconfig[$trigger];
-
-            //run proxy
-            runproxy($callsign, $destinations, $rawData, $db, $insertedId, "trigger");            
-        }
-
-        //end function
-        return;
+        //return database connection and last inserted id
+        return [$db, $insertedId];
     }
 
     function runproxy($callsign, $destinationraw, $rawData, $db, $insertedId, string $type)
@@ -268,13 +287,17 @@
         //close curl
         curl_close($ch);
 
-        //set proxy URL to spot
-        $stmt = $db->prepare("UPDATE spots SET proxied = :proxied WHERE id = :id;");
-        $stmt->bindValue(':proxied', $multiple == null ? $destination : json_encode($multiple));
-        $stmt->bindValue(':id', $dbid);
+        //set proxy URL to spot, only if a db connection was provided
+        if($db != null)
+        {
+            $stmt = $db->prepare("UPDATE spots SET proxied = :proxied WHERE id = :id;");
+            $stmt->bindValue(':proxied', $multiple == null ? $destination : json_encode($multiple));
+            $stmt->bindValue(':id', $dbid);
 
-        //Execute the SQL query to update data
-        $stmt->execute();
+            //Execute the SQL query to update data
+            $stmt->execute();
+        }
+        
     }
 
 
