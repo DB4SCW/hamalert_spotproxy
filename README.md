@@ -43,7 +43,7 @@ Point your webserver to the directory of this project (if you followed this inst
 - enable the rewrite engine on your webserver
 
 ### Step 5: Hamalert
-Set the URL destination to the subdomain you chose for this project and add the "URL" destination to each trigger you want hamalert spotproxy to process.
+Set the URL destination to the subdomain you chose for this project (example: ```https://alerts.your.site.com/hamalert_spotreceiver.php``` - customize your domain, but leave the php file name intact) and add the "URL" destination to each trigger you want hamalert spotproxy to process.
 
 ### Step 6: Enjoy!
 Plain and simple, enjoy your proxied (or stored) hamalert spots.
