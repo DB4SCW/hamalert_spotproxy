@@ -35,7 +35,7 @@ If you like to proxy based on trigger name, fill out the "trigger" section of th
 
 If you like hamalert spotproxy to store all the spots it receives in a sqlite database, provide ```true``` to the key ```use_database```. If you don't like to store your spots, provide ```false``` or omit this key altogether.
 
-You can also provide a database name you like by modifying the key ```filename```. If you leave this empty or omit this key, but turn on the databse feature, the file will be named ```spots.sqlite```.
+You can also provide a database name you like by modifying the key ```filename```. If you leave this empty or omit this key, but turn on the database feature, the file will be named ```spots.sqlite```.
 
 ### Step 4: Webserver
 Point your webserver to the directory of this project (if you followed this instructions, ```/var/www/hamalert_spotproxy```) and make sure to:
