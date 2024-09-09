@@ -44,7 +44,7 @@
             $triggerconfig = $config['triggers'];
         }
 
-        //extract databse config if present
+        //extract database config if present
         if(array_key_exists("database", $config))
         {
             $databaseconfig = $config['database'];
