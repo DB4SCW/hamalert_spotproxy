@@ -1,4 +1,11 @@
 {
-  "N0CALL": "https://your.url.here/receiver.php",
-  "N1CECALL": ["https://second.other.url.here/receiver.php", "https://third.other.url.here/hamalertreceiver.php"]
+	"callsigns":
+	{
+		"N0CALL": "https://your.url.here/receiver.php",
+		"N1CECALL": ["https://second.other.url.here/receiver.php", "https://third.other.url.here/hamalertreceiver.php"]
+	},
+	"triggers": {
+		"My first trigger": "https://your.url.here/receiver.php",
+		"My second trigger": ["https://second.other.url.here/receiver.php", "https://third.other.url.here/hamalertreceiver.php"]
+	}
 }

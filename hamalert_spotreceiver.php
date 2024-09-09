@@ -11,6 +11,8 @@
         //check if config file exists and decide if hamalertproxy capabilities are needed
         $skip_hamalert_proxy = true;
         $config = [];
+        $callsignconfig = [];
+        $triggerconfig = [];
         if(file_exists("config.json"))
         {
             //load config.json
@@ -20,6 +22,18 @@
                 die("invalid JSON file");
             }
             
+            //extract callsign config if present
+            if(array_key_exists("callsigns", $config))
+            {
+                $callsignconfig = $config['callsigns'];
+            }
+
+            //extract trigger config if present
+            if(array_key_exists("triggers", $config))
+            {
+                $triggerconfig = $config['triggers'];
+            }
+
             //set skip flag
             $skip_hamalert_proxy = false;
         }
@@ -164,35 +178,69 @@
             return;
         }
 
-        //check if proxy is defined for the callsign and execute post
+        //get callsign data from input json
         $callsign = $jsonData['callsign'] ?? null;
-        if (array_key_exists($callsign, $config)) {
-            
+        $trigger = $jsonData['triggerComment'] ?? null;
+        
+        //run proxy for every call if ":ALLCALL:" exists in the config
+        if(array_key_exists(":ALLCALL:", $callsignconfig))
+        {
             //get destination(s)
-            $destinations = $config[$callsign];
-
-            //determine if it is a singular destination or not
-            if(is_array($destinations))
-            {   
-                //proxy for each destination
-                foreach ($destinations as $destination) {
-                    hamalert_proxy($rawData, $destination, $db, $insertedId, $destinations);
-                    echo "Hamalert proxy for callsign " . $callsign . " to " . $destination . " performed successfully.\r\n";
-                }
-            }elseif(is_string($destinations))
-            {
-                //proxy for singular destination
-                $destination = $destinations;
-                hamalert_proxy($rawData, $destination, $db, $insertedId);
-                echo "Hamalert proxy for callsign " . $callsign . " to " . $destination . " performed successfully.\r\n";
-            }else
-            {
-                die("Invalid destination for proxy in config.json\r\n");
-            }
-           
+            $destinations = $callsignconfig[':ALLCALL:'];
+            
+            //run proxy
+            runproxy($callsign, $destinations, $rawData, $db, $insertedId, "allcall");
         }
 
+        //run proxy if callsign explicitly exists inside the callsignconfig
+        if (array_key_exists($callsign, $callsignconfig)) {
+            
+            //get destination(s)
+            $destinations = $callsignconfig[$callsign];
+
+            //run proxy
+            runproxy($callsign, $destinations, $rawData, $db, $insertedId, "callsign");
+        }
+
+        //run proxy for triggers
+        if(array_key_exists($trigger, $triggerconfig))
+        {
+            //get destination(s)
+            $destinations = $triggerconfig[$trigger];
+
+            //run proxy
+            runproxy($callsign, $destinations, $rawData, $db, $insertedId, "trigger");            
+        }
+
+        //end function
         return;
+    }
+
+    function runproxy($callsign, $destinationraw, $rawData, $db, $insertedId, string $type)
+    {
+        //determine todo variable
+        $destinations = [];
+
+        //determine if it is a singular destination or not and add it to the todo list
+        if(is_array($destinationraw))
+        {   
+            foreach ($destinationraw as $dest) {
+                array_push($destinations, $dest);
+            }
+        }elseif(is_string($destinationraw))
+        {
+            array_push($destinations, $destinationraw);
+        }else
+        {
+            die("Invalid destination for proxy in config.json\r\n");
+        }
+
+        //proxy for each todo destination
+        foreach ($destinations as $destination) {
+            hamalert_proxy($rawData, $destination, $db, $insertedId, $destinations);
+            echo ucfirst($type) . " Hamalert proxy for callsign " . $callsign . " to " . $destination . " performed successfully.\r\n";
+        }
+
     }
 
     function hamalert_proxy(string $raw_data, $destination, $db, int $dbid, $multiple = null)
