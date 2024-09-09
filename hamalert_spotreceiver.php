@@ -25,6 +25,12 @@
         } catch (\Throwable $th) {
             die("invalid JSON file");
         }
+
+        //check if json parse failed
+        if($config == null)
+        {
+            die("invalid JSON file");
+        }
         
         //extract callsign config if present
         if(array_key_exists("callsigns", $config))
