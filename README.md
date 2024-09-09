@@ -41,3 +41,9 @@ You can also provide a database name you like by modifying the key ```filename``
 Point your webserver to the directory of this project (if you followed this instructions, ```/var/www/hamalert_spotproxy```) and make sure to:
 - enable your webserver to read .htaccess files and process them
 - enable the rewrite engine on your webserver
+
+### Step 5: Hamalert
+Set the URL destination to the subdomain you chose for this project and add the "URL" destination to each trigger you want hamalert spotproxy to process.
+
+### Step 6: Enjoy!
+Plain and simple, enjoy your proxied (or stored) hamalert spots.
