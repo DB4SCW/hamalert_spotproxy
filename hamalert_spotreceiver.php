@@ -108,7 +108,7 @@
         return;
     }
 
-    function storespottodatabase(string $dbFile, string $jsonData)
+    function storespottodatabase(string $dbFile, $jsonData)
     {
         // Create (open) SQLite database connection
         $db = new PDO('sqlite:' . $dbFile);
