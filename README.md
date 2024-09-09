@@ -33,6 +33,8 @@ If you like to have hamalert spotproxy sent this spot to multiple endpoints, pro
 
 If you like to proxy based on trigger name, fill out the "trigger" section of the config. Just as with callsigns, you can provide a single endpoint or an array of endpoints.
 
+If you like to proxy EVERY spot received, provide the key ```:ALLCALL:``` in the callsigns section and the corresponding URL. Attention: If ```:ALLCALL:``` is present and the spot matches another entry in the callsigns or triggers section, it will be proxied twice!
+
 If you like hamalert spotproxy to store all the spots it receives in a sqlite database, provide ```true``` to the key ```use_database```. If you don't like to store your spots, provide ```false``` or omit this key altogether.
 
 You can also provide a database name you like by modifying the key ```filename```. If you leave this empty or omit this key, but turn on the database feature, the file will be named ```spots.sqlite```.
