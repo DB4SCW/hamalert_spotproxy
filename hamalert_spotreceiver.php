@@ -291,7 +291,7 @@
         if($db != null)
         {
             $stmt = $db->prepare("UPDATE spots SET proxied = :proxied WHERE id = :id;");
-            $stmt->bindValue(':proxied', $multiple == null ? $destination : json_encode($multiple));
+            $stmt->bindValue(':proxied', $multiple == null ? $destination : json_encode($multiple, JSON_UNESCAPED_SLASHES));
             $stmt->bindValue(':id', $dbid);
 
             //Execute the SQL query to update data
