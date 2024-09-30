@@ -1,13 +1,7 @@
 <?php
 
     function main()
-    {
-        // Check if the request method is POST
-        if ($_SERVER['REQUEST_METHOD'] != 'POST') 
-        {
-            die("Please send a POST request.");
-        }
-        
+    {        
         //check if config file exists and abort if missing
         $config = [];
         $callsignconfig = [];
@@ -31,7 +25,7 @@
         {
             die("invalid JSON file");
         }
-        
+
         //extract callsign config if present
         if(array_key_exists("callsigns", $config))
         {
@@ -48,6 +42,12 @@
         if(array_key_exists("database", $config))
         {
             $databaseconfig = $config['database'];
+        }
+
+        // Check if the request method is POST
+        if ($_SERVER['REQUEST_METHOD'] != 'POST') 
+        {
+            die("Please send a POST request.");
         }
 
         // Get the raw POST data (which is JSON)
